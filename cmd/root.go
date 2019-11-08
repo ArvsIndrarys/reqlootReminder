@@ -18,8 +18,6 @@ package cmd
 import (
 	"errors"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/gen2brain/beeep"
@@ -57,58 +55,17 @@ func Execute() {
 func executeCmd(cmd *cobra.Command, args []string) error {
 
 	input := args[0]
-	indexes, err := sanitizeUserInput(input)
+
+	waitTime, err := time.ParseDuration(input)
 	if err != nil {
 		return err
 	}
 
-	waitTime, err := indexesToWaitTime(input, indexes)
-	if err != nil {
-		return err
-	}
-
-	time.Sleep(time.Duration(waitTime) * time.Second)
+	time.Sleep(waitTime)
 	err = beeep.Notify("Reqloot", "It is time to get your stamina!", "")
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func sanitizeUserInput(input string) ([]int, error) {
-
-	hourIndex := strings.Index(input, "h")
-	minuteIndex := strings.Index(input, "m")
-	secondIndex := strings.Index(input, "s")
-
-	if hourIndex > minuteIndex && minuteIndex != -1 {
-		return nil, WrongOrderError
-	}
-	if hourIndex > secondIndex && secondIndex != -1 {
-		return nil, WrongOrderError
-	}
-	if minuteIndex > secondIndex && secondIndex != -1 {
-		return nil, WrongOrderError
-	}
-
-	return []int{hourIndex, minuteIndex, secondIndex}, nil
-}
-
-func indexesToWaitTime(input string, indexes []int) (int, error) {
-
-	values := []int{0, 0, 0}
-	lastIndex := 0
-	for i, v := range indexes {
-		if v != -1 {
-			value, err := strconv.Atoi(input[lastIndex:v])
-			if err != nil {
-				return 0, err
-			}
-			values[i] = value
-			lastIndex = v + 1
-		}
-	}
-
-	return values[0]*3600 + values[1]*60 + values[2], nil
 }
